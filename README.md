@@ -1,2 +1,2 @@
 # MPlus-LCA-auto
-Runs basic LCA through Mplus using R. 
+Runs basic LCA and LPA through Mplus using R. 
