@@ -16,6 +16,8 @@ cat.list.paste <- paste(cat.list, collapse="\n")
 #varlist <- paste(variablelist)
 #varlist <- deparse(substitute(varlist))
 filename1<- paste(filename, cl, ext, sep="")
+
+#this creates the Mplus syntax
 fintitle <- paste("Title:", title_mp, ";", sep=" ")
 data <- paste("data: File is", filename_path, ";", sep=" ") 
 variablelist <- paste("Variable: Names are", (varlistpaste), ";")
@@ -29,12 +31,12 @@ output <- paste("Output:", "sampstat", "Tech11", "Tech14", ";")
 plot <- paste("plot: type=plot3;", "series=", variableusepaste,"(*)", ";")
 
 
-#this changes the class number
+#this loops through each class enumeration
 for(i in 1:classes){
   classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
   mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag, classes[[i]], analysis, starts, processors, output, plot, sep="\n")}
 
-#create the files
+#create each mplus file
 for(q in 1:length(filename1)){
   cat(mplusinptoclass[[q]], file = filename1[[q]])}
 
