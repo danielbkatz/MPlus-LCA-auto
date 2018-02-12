@@ -24,30 +24,8 @@ mplusbasicmix <- function(filename, ext, title_mp, namedata, data_set, variableu
   filename1<- paste(filename, cl, ext, sep="")
   
   
-  #this is for creating the syntax for an LPA
-  if(cat.null==TRUE){
-    #this creates the Mplus syntax
-    fintitle <- paste("Title:", title_mp, ";", sep=" ")
-    data <- paste("data: File is", tablefile, ";", sep=" ") 
-    variablelist <- paste("Variable: Names are", (varlistpaste), ";")
-    usev <- paste("Usev=", variableusepaste, ";")
-    missflag <- paste("Missing are all","(",missflag,")", ";")
-    analysis <- paste("Analysis: type=Mixture;")
-    starts <- paste("starts=", starts, refinestarts, ";", sep =" ")
-    processors <- "processors=4(starts);"
-    output <- paste("Output:", "sampstat", "Tech11", "Tech14", ";") 
-    plot <- paste("plot: type=plot3;", "series=", variableusepaste,"(*)", ";", sep="\n")
-      for(i in 1:classes){
-        classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
-        mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, missflag, classes[[i]], analysis, starts, processors, output, plot, sep="\n")}
-    
-    #create each mplus file
-    for(q in 1:length(filename1)){
-      cat(mplusinptoclass[[q]], file = filename1[[q]])}}
-  
 
-#this is for creating the syntax for an LCA. There's probably a smoother way of doing this.
-else{
+#this is for creating the syntax for an LPA and LCA. There's probably a smoother way of doing this.
   fintitle <- paste("Title:", title_mp, ";", sep=" ")
   data <- paste("data: File is", tablefile, ";", sep=" ") 
   variablelist <- paste("Variable: Names are", (varlistpaste), ";")
@@ -59,14 +37,20 @@ else{
   processors <- "processors=4(starts);"
   output <- paste("Output:", "sampstat", "Tech11", "Tech14", ";") 
   plot <- paste("plot: type=plot3;", "series=", variableusepaste,"(*)", ";", sep="\n")
-  
+#FOR LPA
+  if(cat.null==TRUE){
   for(i in 1:classes){
     classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
-    mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag, classes[[i]], analysis, starts, processors, output, plot, sep="\n")}
+    mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, missflag, classes[[i]], analysis, starts, processors, output, plot, sep="\n")}}
+#FOR LCA
+  else{
+  for(i in 1:classes){
+    classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
+    mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag, classes[[i]], analysis, starts, processors, output, plot, sep="\n")}}
 
 #create each mplus file
 for(q in 1:length(filename1)){
-  cat(mplusinptoclass[[q]], file = filename1[[q]])}}
+  cat(mplusinptoclass[[q]], file = filename1[[q]])}
 
 
 
