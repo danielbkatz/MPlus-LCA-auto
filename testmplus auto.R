@@ -36,7 +36,7 @@ mplusbasicmix <- function(filename, ext, title_mp, namedata, data_set, variableu
     starts <- paste("starts=", starts, refinestarts, ";", sep =" ")
     processors <- "processors=4(starts);"
     output <- paste("Output:", "sampstat", "Tech11", "Tech14", ";") 
-    plot <- paste("plot: type=plot3;", "series=", variableusepaste,"(*)", ";")
+    plot <- paste("plot: type=plot3;", "series=", variableusepaste,"(*)", ";", sep="\n")
       for(i in 1:classes){
         classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
         mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, missflag, classes[[i]], analysis, starts, processors, output, plot, sep="\n")}
@@ -58,7 +58,7 @@ else{
   starts <- paste("starts=", starts, refinestarts, ";", sep =" ")
   processors <- "processors=4(starts);"
   output <- paste("Output:", "sampstat", "Tech11", "Tech14", ";") 
-  plot <- paste("plot: type=plot3;", "series=", variableusepaste,"(*)", ";")
+  plot <- paste("plot: type=plot3;", "series=", variableusepaste,"(*)", ";", sep="\n")
   
   for(i in 1:classes){
     classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
@@ -87,5 +87,5 @@ mplusbasicmix("testt", ".inp", "this is an mplus file", "formd", formdcleanuse, 
 
 #example usage for LCA
 
-mplusbasicmix("testrun", ".inp", "this is a test of my function",  "formdata", formdcleanuse, formdcleanuse, 999, 4, 500, 100, formdcleanuse )
+mplusbasicmix("testrun", ".inp", "this is a test of my function",  "formdata", formdcleanuse, formdcleanuse, 999, 4, 500, 100, formdc )
 
