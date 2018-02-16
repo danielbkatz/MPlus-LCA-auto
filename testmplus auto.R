@@ -69,14 +69,16 @@ shell.exec(file.path(getwd(), bat.file.name))
 return(filename2)}
 
 
+#need this packagage for the data cleaning
+install.packages("dplyr")
+library("dplyr")
 
 
 
 
 #This creates a fit table for your LCA
 lcatab <- function(lcamod){
-  #install.packages("dplyr")
-  #library("dplyr")
+ 
   
   #creates all the lists and tables so for loops can be run. I can probably get rid of some of these
 numclass <- length(lcamod)
