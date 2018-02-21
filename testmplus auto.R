@@ -49,11 +49,20 @@ mplusbasicmix <- function(filename, ext, title_mp, namedata, data_set, variableu
                                     analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}}
 #FOR LCA
   else{
+    categoricallist <- categoricallist %>%mutate_all(funs(replace(., missflag, 999)))
+
+    
+    #categoricallist2 <- categoricallist2%>%
+      #mutate_at(., funs(factor(.)))
+    
+    #ncat<- apply(categoricallist2, 2, nlevels(categoricallist2))
+    
     for(i in 1:classes){
         classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
         savedata[[i]] <- paste("savedata: results are ", filename, i,".dat", ";", sep="" )
-        mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag, classes[[i]], 
-                                      analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}}
+        mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag, classes[[i]],                                   analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}
+    
+  }
 #create each mplus file
 for(q in 1:length(filename1)){
   cat(mplusinptoclass[[q]], file = filename1[[q]])}
@@ -64,9 +73,11 @@ for(q in 1:length(filename1)){
   bat.file.name <- paste(filename, ".bat", sep = "")
   cat(bat.string, file=bat.file.name, sep="\n")
 
+
 #running batch file
 shell.exec(file.path(getwd(), bat.file.name))
-return(filename2)}
+#returnlist <- list(ncat)
+return(categoricallist2)}
 
 
 #need this packagage for the data cleaning
