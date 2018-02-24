@@ -32,7 +32,7 @@ mplusbasicmix <- function(filename, ext, title_mp, namedata, data_set, variableu
   variablelist <- paste("Variable: Names are", (varlistpaste), ";")
   usev <- paste("Usev=", variableusepaste, ";")
   categorical <- paste("categorical=", cat.list.paste,";")
-  missflag <- paste("Missing are all","(",missflag,")", ";")
+  missflag1 <- paste("Missing are all","(",missflag,")", ";")
   analysis <- paste("Analysis: type=Mixture;")
   starts <- paste("starts=", starts, refinestarts, ";", sep =" ")
   processors <- "processors=4(starts);"
@@ -45,22 +45,22 @@ mplusbasicmix <- function(filename, ext, title_mp, namedata, data_set, variableu
     for(i in 1:classes){
       classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
       savedata[[i]] <- paste("savedata: results are ",i,".dat", sep="" )
-      mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, missflag, classes[[i]], 
+      mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, missflag1, classes[[i]], 
                                     analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}}
 #FOR LCA
   else{
-    categoricallist <- categoricallist %>%mutate_all(funs(replace(., missflag, 999)))
-
+    categoricallist2 <- categoricallist %>% mutate_if(is.numeric, funs(ifelse(. == missflag, NA, .))) %>%
+      na.omit()
     
-    #categoricallist2 <- categoricallist2%>%
-      #mutate_at(., funs(factor(.)))
+    categoricallist3 <- categoricallist2%>%
+      mutate_if(is.numeric, funs(factor(.)))
     
-    #ncat<- apply(categoricallist2, 2, nlevels(categoricallist2))
+    ncat<- lapply(categoricallist3, nlevels)
     
     for(i in 1:classes){
         classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
         savedata[[i]] <- paste("savedata: results are ", filename, i,".dat", ";", sep="" )
-        mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag, classes[[i]],                                   analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}
+        mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag1, classes[[i]],                                   analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}
     
   }
 #create each mplus file
@@ -76,13 +76,13 @@ for(q in 1:length(filename1)){
 
 #running batch file
 shell.exec(file.path(getwd(), bat.file.name))
-#returnlist <- list(ncat)
-return(categoricallist2)}
+if(cat.null==FALSE){
+  returnlist <- list(filename2, cat.null, ncat, cl, ncol(categoricallist))}
+else{
+  returnlist <- list(filename2, cat.null, cl, ncol(variableuse))}
+return(returnlist)}
 
 
-#need this packagage for the data cleaning
-install.packages("dplyr")
-library("dplyr")
 
 
 
@@ -90,8 +90,7 @@ library("dplyr")
 #This creates a fit table for your LCA
 lcatab <- function(lcamod){
  
-  
-  #creates all the lists and tables so for loops can be run. I can probably get rid of some of these
+#creates all the lists and tables so for loops can be run. I can probably get rid of some of these
 numclass <- length(lcamod)
 fitlist <- list()
 newfit <- list()
@@ -99,22 +98,40 @@ tablefit2class <- list()
 tablefit2class2<- list()
 tablefit2class3<- list()
 fitmulti <- data.frame()
+cat.null == lcamod[[2]]
+
+if(cat.null==FALSE){
+ncatdat <- as.data.frame(lcamod[[2]])
+claslist <- as.data.frame(lcamod[[3]])
+itemnum <- lcamod[[5]]}
+
+else{
+  claslist <- as.data.frame(lcamod[[3]])
+  itemnum <- lcamod[[4]]}
+
  
  #don't even need this anymore, I don't think
  #fitmultilist <- as.data.frame(matrix(nrow=numclass, ncol=12, 0))
  
  #this reads in the table from savedata in mplus with fit criteria
- fit.list <- lapply(lcamod, read.table, blank.lines.skip = FALSE, fill = TRUE, sep = "")
+ fit.list <- lapply(lcamod[[1]], read.table, blank.lines.skip = FALSE, fill = TRUE, sep = "")
  
  #this identifies the row in which H0 Log Likelihood resides. Obviously this won't work if you ll is greater than -500
-  fitlist <- lapply(fit.list, function(x) which(x[,1]<=-500))
+#fitlist <- lapply(fit.list, function(x) which(x[,1]<=-500))
+ itemcat <- as.data.frame(ncatdat-1)
+ itemthresh <- apply(itemcat, 2, function(x)x*claslist)
+ itemthreshtot <- Reduce(`+`, itemthresh)
+ classthresh <- apply(claslist, 2, function(cl)cl-1)
+ rowrem <- apply(classthresh, 2, function(x)x+itemthreshtot)
+ rowrem2 <- lapply(rowrem, function(x)x/10)
+ rowround <- lapply(rowrem2, function(x)(ceiling(x)*2))
+ rowremfin <- as.list(rowround$'lcamod[[3]]')
 
-  #this gets rid of the rows above log likelihood value
-  fitdrop <- paste(lapply(fitlist, function(x){x-1}))
-  
+ #return(rowremfin)}
+
   #this just constructs the table for the first one class model
   for(l in 1:length(fit.list)){
-  newfit[[l]] <- fit.list[[l]][-c(1:fitdrop[[l]]),]}
+  newfit[[l]] <- fit.list[[l]][-c(1:rowremfin[[1]][l]),]}
   tablefit1class <- as.data.frame(newfit[[1]])
   
   #getsrid of uneeded fit criteria
@@ -173,16 +190,3 @@ fitmulti <- data.frame()
   write.csv(finalmerge, file=print(namefile))
   }
 
-
-
-
-#example usage for LPA # the extension code (".inp") is just for my own testing so I can test with text files, which is easier to deal with.
-mod1 <- mplusbasicmix("testt", ".inp", "this is an mplus file", "formd", formdcleanuse, formdcleanuse, 999, 3, 100, 20)
-
-#example usage for LCA
-
-testinp <- mplusbasicmix("testrun", ".inp", "this is a test of my function",  "formdata", formdcleanuse, formdcleanuse, 999, 3, 500, 100, formdcleanuse)
-
-
-#to save the fit table
-write.csv(testinp, "preferred_filename.csv" )
