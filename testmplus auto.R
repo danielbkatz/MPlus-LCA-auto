@@ -42,11 +42,16 @@ mplusbasicmix <- function(filename, ext, title_mp, namedata, data_set, variableu
 
   #FOR LPA
   if(cat.null==TRUE){
+    varlpa <- variableuse %>% mutate_if(is.numeric, funs(ifelse(. == missflag, NA, .))) %>%
+      na.omit()
+    listcount <- apply(varlpa, 2, function(x)length(unique(x)))
+    
     for(i in 1:classes){
       classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
       savedata[[i]] <- paste("savedata: results are ",i,".dat", sep="" )
       mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, missflag1, classes[[i]], 
-                                    analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}}
+                                    analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}
+    }
 #FOR LCA
   else{
     categoricallist2 <- categoricallist %>% mutate_if(is.numeric, funs(ifelse(. == missflag, NA, .))) %>%
@@ -60,7 +65,7 @@ mplusbasicmix <- function(filename, ext, title_mp, namedata, data_set, variableu
     for(i in 1:classes){
         classes[[i]] <- paste("class=c","(", i, ")",";", sep="")
         savedata[[i]] <- paste("savedata: results are ", filename, i,".dat", ";", sep="" )
-        mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag1, classes[[i]],                                   analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}
+        mplusinptoclass[[i]] <- paste(fintitle, data, variablelist, usev, categorical, missflag1, classes[[i]], analysis, starts, processors, output, plot, savedata[[i]], sep="\n")}
     
   }
 #create each mplus file
@@ -79,7 +84,7 @@ shell.exec(file.path(getwd(), bat.file.name))
 if(cat.null==FALSE){
   returnlist <- list(filename2, cat.null, ncat, cl, ncol(categoricallist))}
 else{
-  returnlist <- list(filename2, cat.null, cl, ncol(variableuse))}
+  returnlist <- list(filename2, cat.null, cl, ncol(variableuse), listcount)}
 return(returnlist)}
 
 
@@ -98,40 +103,48 @@ tablefit2class <- list()
 tablefit2class2<- list()
 tablefit2class3<- list()
 fitmulti <- data.frame()
-cat.null == lcamod[[2]]
+cat.null <- lcamod[[2]]
+
+fit.list <- lapply(lcamod[[1]], read.table, blank.lines.skip = FALSE, fill = TRUE, sep = "")
 
 if(cat.null==FALSE){
-ncatdat <- as.data.frame(lcamod[[2]])
-claslist <- as.data.frame(lcamod[[3]])
-itemnum <- lcamod[[5]]}
+ncatdat <- as.data.frame(lcamod[[3]])
+claslist <- as.data.frame(lcamod[[4]])
+itemnum <- lcamod[[5]]
+
+
+itemcat <- as.data.frame(ncatdat-1)
+itemthresh <- apply(itemcat, 2, function(x)x*claslist)
+itemthreshtot <- Reduce(`+`, itemthresh)
+classthresh <- apply(claslist, 2, function(cl)cl-1)
+rowrem <- apply(classthresh, 2, function(x)x+itemthreshtot)
+rowrem2 <- lapply(rowrem, function(x)x/10)
+rowround <- lapply(rowrem2, function(x)(ceiling(x)*2))
+rowuse <- rowround$'lcamod[[3]]'
+rowremfin <- as.list(rowuse)}
+
 
 else{
   claslist <- as.data.frame(lcamod[[3]])
-  itemnum <- lcamod[[4]]}
-
- 
+  classthresh <- apply(claslist, 2, function(cl)cl-1)
+  itemnum <- lcamod[[4]]
+  means <- apply(claslist, 2, function(x)x*itemnum)
+  meanvar <- means*2
+  paramtot <- apply(meanvar, 2, function(x)x+classthresh)
+  rowtot <- apply(paramtot, 2, function(x)x/10)
+  rowround <- apply(rowtot, 2, function(x)(ceiling(x)*2))
+  rowremfin <- as.list(rowround)
+  }
+  #return(rowremfin)}}
  #don't even need this anymore, I don't think
  #fitmultilist <- as.data.frame(matrix(nrow=numclass, ncol=12, 0))
  
- #this reads in the table from savedata in mplus with fit criteria
- fit.list <- lapply(lcamod[[1]], read.table, blank.lines.skip = FALSE, fill = TRUE, sep = "")
  
- #this identifies the row in which H0 Log Likelihood resides. Obviously this won't work if you ll is greater than -500
-#fitlist <- lapply(fit.list, function(x) which(x[,1]<=-500))
- itemcat <- as.data.frame(ncatdat-1)
- itemthresh <- apply(itemcat, 2, function(x)x*claslist)
- itemthreshtot <- Reduce(`+`, itemthresh)
- classthresh <- apply(claslist, 2, function(cl)cl-1)
- rowrem <- apply(classthresh, 2, function(x)x+itemthreshtot)
- rowrem2 <- lapply(rowrem, function(x)x/10)
- rowround <- lapply(rowrem2, function(x)(ceiling(x)*2))
- rowremfin <- as.list(rowround$'lcamod[[3]]')
-
  #return(rowremfin)}
 
   #this just constructs the table for the first one class model
   for(l in 1:length(fit.list)){
-  newfit[[l]] <- fit.list[[l]][-c(1:rowremfin[[1]][l]),]}
+  newfit[[l]] <- fit.list[[l]][-c(1:rowremfin[[l]]),]}
   tablefit1class <- as.data.frame(newfit[[1]])
   
   #getsrid of uneeded fit criteria
