@@ -120,8 +120,10 @@ classthresh <- apply(claslist, 2, function(cl)cl-1)
 rowrem <- apply(classthresh, 2, function(x)x+itemthreshtot)
 rowrem2 <- lapply(rowrem, function(x)x/10)
 rowround <- lapply(rowrem2, function(x)(ceiling(x)*2))
-rowuse <- rowround$'lcamod[[3]]'
-rowremfin <- as.list(rowuse)}
+#rowuse <- rowround$'lcamod[[4]]'
+rowremfin <- as.list(t(rowround[[1]]))
+#return(rowremfin)}
+}
 
 
 else{
@@ -193,11 +195,12 @@ else{
   
   #gets rid of an empty row because I'm lazy
   finalmerge <- finalmerge[,-9]
-    
+  BICplot <-  plot(finalmerge[,3], type="p")
+  finalret <- list(BICplot, finalmerge)
   return(finalmerge)
   #return(namefile)
   
-  plot(finalmerge[,3], type="p")
+
   
   #this isn't working
   write.csv(finalmerge, file=print(namefile))
